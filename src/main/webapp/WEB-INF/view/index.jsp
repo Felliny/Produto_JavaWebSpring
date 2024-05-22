@@ -60,6 +60,17 @@
                     </div>
                 </c:if>
             </form>
+            <br>
+            <br>
+            <form action="produtoRelatorio" method="post" target="_blank">
+                <div>
+                    <div>
+                        <label for="quantidade">Quantidade:</label>
+                        <input type="number" name="quantidade" min="0" value="0" id="quantidade">
+                        <input type="submit" name="botao" id="botao" value="Gerar">
+                    </div>
+                </div>
+            </form>
         </main>
     </div>
 </body>

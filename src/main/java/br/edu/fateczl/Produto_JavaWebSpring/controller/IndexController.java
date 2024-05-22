@@ -3,18 +3,31 @@ package br.edu.fateczl.Produto_JavaWebSpring.controller;
 import br.edu.fateczl.Produto_JavaWebSpring.model.Produto;
 import br.edu.fateczl.Produto_JavaWebSpring.persistence.GenericDao;
 import br.edu.fateczl.Produto_JavaWebSpring.persistence.ProdutoDao;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.JasperRunManager;
+import net.sf.jasperreports.engine.util.JRLoader;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 public class IndexController {
@@ -66,5 +79,40 @@ public class IndexController {
         }
 
         return new ModelAndView("index");
+    }
+
+    @RequestMapping(name = "produtoRelatorio", value = "/produtoRelatorio", method = RequestMethod.POST)
+    public ResponseEntity relatorioPost(@RequestParam Map<String, String> allRequestParam) {
+        String erro= "";
+        Map<String, Object> paramRelatorio = new HashMap<String, Object>();
+        paramRelatorio.put("quant", allRequestParam.get("quantidade"));
+
+        byte[] bytes= null;
+
+        //Inicializar os elementos do response
+        InputStreamResource resource = null;
+        HttpStatus status = null;
+        HttpHeaders header = new HttpHeaders();
+
+        try {
+            Connection connection = gDao.getConnection();
+            File file = ResourceUtils.getFile("classpath:reports/RelatorioProduto.jasper");
+            JasperReport report= (JasperReport) JRLoader.loadObjectFromFile(file.getAbsolutePath());
+            bytes= JasperRunManager.runReportToPdf(report, paramRelatorio, connection);
+        } catch (ClassNotFoundException | SQLException | FileNotFoundException | JRException e) {
+            e.printStackTrace();
+            erro = e.getMessage();
+            status = HttpStatus.BAD_REQUEST;
+        } finally {
+            if (erro.equals("")) {
+                InputStream inputStream = new ByteArrayInputStream(bytes);
+                resource = new InputStreamResource(inputStream);
+                header.setContentLength(bytes.length);
+                header.setContentType(MediaType.APPLICATION_PDF);
+                status = HttpStatus.OK;
+            }
+        }
+
+        return new ResponseEntity(resource, header, status);
     }
 }
