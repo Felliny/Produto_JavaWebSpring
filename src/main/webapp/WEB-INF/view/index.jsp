@@ -8,8 +8,8 @@
 </head>
 <body>
     <header>
-        <a href="index.jsp">Consultar</a>
-        <a href="produto.jsp">Produto</a>
+        <a href="index">Consultar</a>
+        <a href="produto">Produto</a>
     </header>
     <div>
         <main>
